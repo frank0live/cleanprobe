@@ -115,6 +115,32 @@ Real output:
     invalid example.com:443 sni=-  errors: uuid is not a valid UUID; security=reality requires sni=; pbk does not decode to a 32-byte public key; sid must be hex, at most 16 chars
     1/2 link(s) valid
 
+#### Exit codes
+
+| code | meaning |
+|---|---|
+| `0` | every link in the file is valid |
+| `1` | at least one link is invalid (or the file held no links) |
+
+So a script can gate on it directly:
+
+```bash
+cleanprobe check links.txt || { echo "broken links, not deploying"; exit 1; }
+```
+
+#### Machine-readable output
+
+Add `--json out.json` to get one object per link instead of the table — useful
+for CI, dashboards, or piping into `jq`:
+
+```bash
+cleanprobe check links.txt --json report.json
+jq -r '.[] | select(.ok | not) | .host' report.json
+```
+
+Each entry carries `ok`, `name`, `host`, `port`, `sni`, `security`, `errors`,
+and `warnings`. `scan` and `probe` accept the same `--json` flag.
+
 ---
 
 ## Reading the results

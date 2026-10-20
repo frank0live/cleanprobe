@@ -77,6 +77,25 @@ def _cmd_check(args: argparse.Namespace) -> int:
         if not info.ok:
             bad += 1
     print(f"{len(infos) - bad}/{len(infos)} link(s) valid")
+
+    if args.json_out:
+        payload = [
+            {
+                "ok": info.ok,
+                "name": info.name,
+                "host": info.host,
+                "port": info.port,
+                "sni": info.sni,
+                "security": info.security,
+                "errors": info.errors,
+                "warnings": info.warnings,
+            }
+            for info in infos
+        ]
+        with open(args.json_out, "w", encoding="utf-8") as handle:
+            json.dump(payload, handle, indent=2)
+        print(f"json written: {args.json_out}")
+
     return 0 if infos and not bad else 1
 
 
@@ -115,6 +134,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_check.add_argument("file")
     p_check.add_argument("--live", action="store_true", help="also probe each valid link's endpoint")
     p_check.add_argument("--timeout", type=float, default=4.0)
+    p_check.add_argument("--json", dest="json_out", help="write the per-link results as JSON")
     p_check.set_defaults(func=_cmd_check)
 
     p_self = sub.add_parser("selftest", help="end-to-end check on loopback (no external traffic)")

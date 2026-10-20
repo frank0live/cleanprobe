@@ -39,6 +39,24 @@ def _b64_urlsafe_len(value: str) -> int | None:
         return None
 
 
+def _parse_query_keep_plus(query: str) -> dict[str, list[str]]:
+    """Split a URI query without the form-encoding '+' -> space rewrite.
+
+    VLESS parameters carry base64 keys (``pbk``); in standard base64 index 62 is
+    '+' and is perfectly valid there. ``parse_qs`` applies
+    ``application/x-www-form-urlencoded`` rules and turns that '+' into a space,
+    which silently corrupts the key. Percent-decoding alone is what a URI query
+    actually needs.
+    """
+    params: dict[str, list[str]] = {}
+    for chunk in query.split("&"):
+        if not chunk:
+            continue
+        key, _, value = chunk.partition("=")
+        params.setdefault(unquote(key), []).append(unquote(value))
+    return params
+
+
 def parse_vless(uri: str) -> LinkInfo:
     """Parse a vless:// link; collect all problems in `.errors`."""
     info = LinkInfo(raw=uri.strip())
@@ -62,7 +80,7 @@ def parse_vless(uri: str) -> LinkInfo:
     if not (1 <= info.port <= 65535):
         info.errors.append("port out of range")
 
-    info.params = parse_qs(parsed.query, keep_blank_values=True)
+    info.params = _parse_query_keep_plus(parsed.query)
     info.name = unquote(parsed.fragment or "")
 
     if info.security == "reality":

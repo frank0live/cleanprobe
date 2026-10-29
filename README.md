@@ -181,3 +181,7 @@ that is why choosing the right SNI matters.
 
 MIT (see LICENSE). Independent implementation; written from public
 protocol documentation only.
+
+## Support
+
+- 💬 Telegram: [@master_supports](https://t.me/master_supports)
